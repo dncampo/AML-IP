@@ -49,6 +49,7 @@ constexpr const uint32_t RAND_SIZE = 1;
  * @brief This class represents the structure AmlipIdDataType, which implements \c InterfaceDataType and hence serves
  * as a communication interface to \c AmlipId class.
  * @ingroup AMLIP
+ * @warning Value given by random_id_() just return values between 0 and 256. Thus, can return the same value.
  */
 class AmlipIdDataType : public InterfaceDataType
 {
