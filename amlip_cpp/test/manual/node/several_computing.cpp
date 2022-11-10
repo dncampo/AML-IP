@@ -48,9 +48,7 @@ int main(
         logUser(AMLIPCPP_MANUAL_TEST, "Node_1 created: " << computing_node_1 << ". Answering job request...");
         logUser(AMLIPCPP_MANUAL_TEST, "Node_2 created: " << computing_node_2 << ". Answering job request...");
 
-        // Answer job_1 request
-        eprosima::amlip::types::MsReferenceDataType reference_1 = computing_node_1.process_job(
-            [](const eprosima::amlip::types::JobDataType& data_1)
+        auto lambda = [](const eprosima::amlip::types::JobDataType& data_1)
             {
                 // Convert data to string
                 std::string data_str_1(static_cast<char*>(data_1.data()), data_1.data_size());
@@ -73,7 +71,10 @@ int main(
                 // Sending result as solution
                 return eprosima::amlip::types::SolutionDataType(
                     static_cast<void*>(ptr_data), data_str_1.size(), true);
-            });
+            };
+
+        // Answer job_1 request
+        eprosima::amlip::types::MsReferenceDataType reference_1 = computing_node_1.process_job(lambda);
 
         // Answer job_2 request
         eprosima::amlip::types::MsReferenceDataType reference_2 = computing_node_2.process_job(

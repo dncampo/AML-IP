@@ -18,6 +18,7 @@ all_library_sources("${TEST_SOURCES}")
 
 set(TEST_NAMES
         "status"
+        "status_functor"
         "main"
         "computing"
         "several_main"
