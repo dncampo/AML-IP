@@ -17,6 +17,7 @@
 
 #include <cpp_utils/Log.hpp>
 #include <cpp_utils/utils.hpp>
+#include <fastrtps/xmlparser/XMLProfileManager.h>
 
 #include <dds/Participant.hpp>
 #include <amlip_cpp/types/id/AmlipIdDataType.hpp>
@@ -24,9 +25,9 @@
 
 namespace test {
 
-constexpr const uint32_t N_SERVERS = 4;
-constexpr const uint32_t N_CLIENTS = 8;
-constexpr const uint32_t N_MESSAGES = 20;
+constexpr const uint32_t N_SERVERS = 2;
+constexpr const uint32_t N_CLIENTS = 2;
+constexpr const uint32_t N_MESSAGES = 3;
 // Warning: N_CLIENTS * N_MESSAGES % N_SERVERS must be 0
 
 class TestDataType : public eprosima::amlip::types::GenericDataType
@@ -99,6 +100,14 @@ TEST(MultiServiceTest, communicate_service_one_on_one)
  */
 TEST(MultiServiceTest, communicate_service_n_to_n)
 {
+    bool intraprocess = true;
+    // Disable intraprocess
+    if (!intraprocess)
+    {
+        eprosima::fastrtps::LibrarySettingsAttributes att;
+        att.intraprocess_delivery = eprosima::fastrtps::IntraprocessDeliveryType::INTRAPROCESS_OFF;
+        eprosima::fastrtps::xmlparser::XMLProfileManager::library_settings(att);
+    }
 
     // Each Client Routine
     auto client_lambda = [](int id, int tasks_to_send){
@@ -144,6 +153,8 @@ TEST(MultiServiceTest, communicate_service_n_to_n)
             // Process task and convert it to lowercase
             server->process_task_sync(processing_routine);
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     };
 
     // Generate all clients

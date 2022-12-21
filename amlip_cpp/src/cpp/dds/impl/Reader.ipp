@@ -94,57 +94,75 @@ T Reader<T>::read()
     eprosima::fastdds::dds::SampleInfo info;
     T data;
 
-    logDebug(
+    logError(
         AMLIPCPP_DDS_READER,
-        "Reading message from: " << *this << ".");
+        "Reading message from: " << *this
+        << " : " << datareader_locked_->get_unread_count()
+        << ".");
 
     // TODO: This creates a new data, ergo it is copying the data arrived. Check and refactor this
 
-    eprosima::utils::ReturnCode return_code = datareader_locked_->take_next_sample(&data, &info);
-    if (return_code == eprosima::utils::ReturnCode::RETCODE_OK)
+    int tries = 0;
+    eprosima::utils::ReturnCode return_code;
+    while(tries++ < 5)
     {
-        // Set number of data still available
-        auto data_unread = datareader_locked_->get_unread_count();
-        if (data_unread <= 0)
+        return_code = datareader_locked_->take_next_sample(&data, &info);
+        if (return_code == eprosima::utils::ReturnCode::RETCODE_OK)
         {
-            logDebug(
-                AMLIPCPP_DDS_READER,
-                "There are no more messages in: " << *this << ".");
+            // Set number of data still available
+            auto data_unread = datareader_locked_->get_unread_count();
+            if (data_unread <= 0)
+            {
+                logError(
+                    AMLIPCPP_DDS_READER,
+                    "There are no more messages in: " << *this << ".");
 
-            // TODO: there is a race condition here as get_unread_count is not guarded by any mutex here
-            // and so a call to is_data_available could be skipped here.
-            reader_data_waiter_.close();
+                // TODO: there is a race condition here as get_unread_count is not guarded by any mutex here
+                // and so a call to is_data_available could be skipped here.
+                reader_data_waiter_.close();
+            }
+            else
+            {
+                logError(
+                    AMLIPCPP_DDS_READER,
+                    "There are still " << data_unread << " messages in Reader: " << *this << ".");
+
+            }
+
+            logError(
+                AMLIPCPP_DDS_READER,
+                "Reader: " << *this
+                        << " received message: " << data
+                        << " from: " << info.sample_identity.writer_guid()
+                        << " : " << datareader_locked_->get_unread_count()
+                        << ".");
+
+            // Return data (this does a move)
+            return data;
         }
         else
         {
-            logDebug(
-                AMLIPCPP_DDS_READER,
-                "There are still " << data_unread << " messages in Reader: " << *this << ".");
-
+            logError(DEBUG, "Trying again to read data failed due to: " << return_code);
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
         }
+    }
 
-        logDebug(
-            AMLIPCPP_DDS_READER,
-            "Reader: " << *this
-                       << " received message: " << data
-                       << " from: " << info.sample_identity.writer_guid()
-                       << ".");
+    throw eprosima::utils::InconsistencyException(STR_ENTRY
+        << "Try to read data from a reader that does not have it." << *this << " : " << datareader_locked_->get_unread_count() << ".");
 
-        // Return data (this does a move)
-        return data;
-    }
-    else if (return_code == eprosima::utils::ReturnCode::RETCODE_NO_DATA)
-    {
-        // TODO
-        throw eprosima::utils::InconsistencyException(STR_ENTRY
-                      << "Try to read data from a reader that does not have it." << *this << ".");
-    }
-    else
-    {
-        // TODO
-        throw eprosima::utils::InconsistencyException(STR_ENTRY
-                      << "Error " << return_code << " while reading message in " << *this << ".");
-    }
+    // else if (return_code == eprosima::utils::ReturnCode::RETCODE_NO_DATA)
+    // {
+    //     // TODO
+    //     throw eprosima::utils::InconsistencyException(STR_ENTRY
+    //                   << "Try to read data from a reader that does not have it." << *this << " : " << datareader_locked_->get_unread_count() << ".");
+    // }
+    // else
+    // {
+    //     // TODO
+    //     throw eprosima::utils::InconsistencyException(STR_ENTRY
+    //                   << "Error " << return_code << " while reading message in " << *this << ".");
+    // }
 }
 
 template <typename T>
@@ -160,7 +178,7 @@ void Reader<T>::on_data_available(
     eprosima::fastdds::dds::SampleInfo info;
     reader->get_first_untaken_info(&info);
 
-    logDebug(
+    logError(
         AMLIPCPP_DDS_READER,
         "Reader " << *this <<
             " has received a data from: " << info.sample_identity.writer_guid() <<

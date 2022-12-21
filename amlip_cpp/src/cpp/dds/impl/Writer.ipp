@@ -55,7 +55,7 @@ Writer<T>::~Writer()
     // In case datawriter has already been destroyed, do nothing
     auto datawriter_locked = datawriter_.lock();
 
-    logDebug(
+    logError(
         AMLIPCPP_DDS_WRITER,
         "Destroying writer:  " << *this << ".");
 
