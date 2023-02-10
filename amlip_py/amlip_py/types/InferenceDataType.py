@@ -19,7 +19,7 @@ from amlip_swig import InferenceDataType as cpp_InferenceDataType
 
 class InferenceDataType(cpp_InferenceDataType):
     """
-    Object that represents a Inference sent from a Edge Node to a Inference one.
+    Object that represents an Inference sent from a Edge Node to a Inference one.
 
     TODO
     ----

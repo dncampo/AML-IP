@@ -19,7 +19,7 @@ from amlip_swig import InferenceSolutionDataType as cpp_InferenceSolutionDataTyp
 
 class InferenceSolutionDataType(cpp_InferenceSolutionDataType):
     """
-    Object that represents a Inference sent from a Edge Node to a Inference one.
+    Object that represents an Inference sent from a Edge Node to a Inference one.
 
     TODO
     ----
